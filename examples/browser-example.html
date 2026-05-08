@@ -1,0 +1,229 @@
+/**
+ * Example: Using Aurio SDK in the Browser (Vanilla JS)
+ * 
+ * This demonstrates that the SDK core works in browsers,
+ * without any React required.
+ * 
+ * To use:
+ * 1. Build the SDK: npm run build
+ * 2. Bundle with a tool like vite, webpack, or esbuild
+ * 3. Include in HTML and use as shown below
+ */
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurio SDK - Browser Example</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .balance-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #334155;
+    }
+    .balance-item:last-child {
+      border-bottom: none;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    .loading {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error {
+      background: #7f1d1d;
+      color: #fca5a5;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 12px 0;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      background: #0f172a;
+      color: #e2e8f0;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h1>🪙 Aurio SDK Browser Demo</h1>
+
+  <div class="card">
+    <h2>Check Balances</h2>
+    <input 
+      type="text" 
+      id="walletInput" 
+      placeholder="Enter wallet address (e.g., 11111111111111111111111111111111)"
+    >
+    <button id="fetchBtn" onclick="fetchBalances()">
+      Fetch Balances
+    </button>
+    <div id="balances"></div>
+    <div id="error"></div>
+  </div>
+
+  <div class="card">
+    <h2>Build Transfer (Demo)</h2>
+    <input 
+      type="text" 
+      id="senderInput" 
+      placeholder="Sender address"
+    >
+    <input 
+      type="text" 
+      id="recipientInput" 
+      placeholder="Recipient address"
+    >
+    <input 
+      type="number" 
+      id="amountInput" 
+      placeholder="Amount (AUR)" 
+      value="1"
+    >
+    <button id="buildBtn" onclick="buildTransfer()">
+      Build Transaction
+    </button>
+    <div id="tx-result"></div>
+  </div>
+
+  <script type="module">
+    // Import from the compiled Aurio SDK
+    // Make sure to build with: npm run build
+    import { 
+      getAurioBalance, 
+      getSolBalance, 
+      buildAurioTransferTx,
+      getAurioConnection 
+    } from '../dist/index.js';
+
+    window.fetchBalances = async function() {
+      const walletInput = document.getElementById('walletInput');
+      const wallet = walletInput.value.trim();
+      const balancesDiv = document.getElementById('balances');
+      const errorDiv = document.getElementById('error');
+      const btn = document.getElementById('fetchBtn');
+
+      if (!wallet) {
+        errorDiv.innerHTML = '<div class="error">Please enter a wallet address</div>';
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      errorDiv.innerHTML = '';
+      balancesDiv.innerHTML = '';
+
+      try {
+        console.log('Fetching balances for:', wallet);
+        
+        const [solBal, aurBal] = await Promise.all([
+          getSolBalance(wallet),
+          getAurioBalance(wallet)
+        ]);
+
+        balancesDiv.innerHTML = `
+          <div class="balance-item">
+            <span>SOL Balance:</span>
+            <strong>${solBal.toFixed(4)} SOL</strong>
+          </div>
+          <div class="balance-item">
+            <span>AUR Balance:</span>
+            <strong>${aurBal.toFixed(6)} AUR</strong>
+          </div>
+        `;
+      } catch (err) {
+        errorDiv.innerHTML = `
+          <div class="error">
+            Error: ${err instanceof Error ? err.message : String(err)}
+          </div>
+        `;
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    };
+
+    window.buildTransfer = async function() {
+      const senderInput = document.getElementById('senderInput');
+      const recipientInput = document.getElementById('recipientInput');
+      const amountInput = document.getElementById('amountInput');
+      const resultDiv = document.getElementById('tx-result');
+      const btn = document.getElementById('buildBtn');
+
+      const sender = senderInput.value.trim();
+      const recipient = recipientInput.value.trim();
+      const amount = amountInput.value.trim();
+
+      if (!sender || !recipient || !amount) {
+        resultDiv.innerHTML = '<div class="error">Please fill all fields</div>';
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        console.log('Building transfer:', { sender, recipient, amount });
+        const tx = await buildAurioTransferTx({ sender, recipient, amount });
+        
+        resultDiv.innerHTML = `
+          <div class="balance-item">
+            <span>Instructions:</span>
+            <strong>${tx.instructions.length}</strong>
+          </div>
+          <div class="balance-item">
+            <span>Fee Payer:</span>
+            <code style="font-size: 12px;">${tx.feePayer?.toBase58().slice(0, 20)}...</code>
+          </div>
+          <p style="color: #10b981; font-size: 12px;">✅ Transaction built successfully!</p>
+        `;
+      } catch (err) {
+        resultDiv.innerHTML = `
+          <div class="error">
+            Error: ${err instanceof Error ? err.message : String(err)}
+          </div>
+        `;
+      } finally {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    };
+
+    // Log SDK info on load
+    console.log('Aurio SDK loaded');
+    console.log('Available exports: getAurioBalance, getSolBalance, buildAurioTransferTx, getAurioConnection');
+  </script>
+</body>
+</html>

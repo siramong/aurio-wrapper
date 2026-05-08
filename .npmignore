@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Source files
+src/
+
+# Example files
+examples/
+
+# Development files
+tsconfig.json
+CONTRIBUTING.md
+PUBLISH.md
+
+# Build files (but keep dist/)
+*.tsbuildinfo
+
+# Logs and debug
+npm-debug.log*
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Git
+.gitignore
+.git/
+.gitattributes
+
+# Tests and coverage
+coverage/
+test/
+__tests__/
