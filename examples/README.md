@@ -145,6 +145,19 @@ const transaction = await buildAurioTransferTx({
 const signature = await wallet.signAndSendTransaction(transaction);
 ```
 
+### Pattern 2b: Pay a Tambu NFT
+```typescript
+import { payToTambu } from 'aurio-sdk';
+
+const transaction = await payToTambu({
+  sender: senderAddress,
+  tambuMint: 'NFT_MINT_ADDRESS',
+  amount: '100.5',
+});
+
+const signature = await wallet.signAndSendTransaction(transaction);
+```
+
 ### Pattern 3: Use React Hook
 ```typescript
 import { useAurio } from 'aurio-sdk/hooks';

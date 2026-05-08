@@ -16,12 +16,13 @@ import {
   getAurioMint,
   isAurioMintConfigured,
 } from "./constants/web3";
+import { isValidTambuNFT, resolveTambuWallet } from "./tambu";
 
 export type AurioAmount = number | string;
 
 export interface BuildAurioTransferTxParams {
   sender: string;
-  recipient: string;
+  recipient: string | PublicKey;
   amount: AurioAmount;
 }
 
@@ -38,6 +39,24 @@ function assertAurioMintConfigured(): void {
 
 function toPublicKey(value: string): PublicKey {
   return new PublicKey(value);
+}
+
+async function resolveRecipientPublicKey(recipient: string | PublicKey): Promise<PublicKey> {
+  if (recipient instanceof PublicKey) {
+    const recipientMint = recipient.toBase58();
+
+    if (await isValidTambuNFT(recipientMint)) {
+      return resolveTambuWallet(recipientMint);
+    }
+
+    return recipient;
+  }
+
+  if (await isValidTambuNFT(recipient)) {
+    return resolveTambuWallet(recipient);
+  }
+
+  return toPublicKey(recipient);
 }
 
 function normalizeUiAmount(amount: AurioAmount): string {
@@ -172,9 +191,9 @@ export async function buildAurioTransferTx({
   const connection = getAurioConnection();
   const aurioMint = getAurioMint();
   const senderPublicKey = toPublicKey(sender);
-  const recipientPublicKey = toPublicKey(recipient);
+  const recipientPublicKey = await resolveRecipientPublicKey(recipient);
   const senderTokenAccount = getAurioTokenAccount(sender);
-  const recipientTokenAccount = getAurioTokenAccount(recipient);
+  const recipientTokenAccount = getAurioTokenAccount(recipientPublicKey.toBase58());
   const [senderAccountInfo, recipientAccountInfo, mintDecimals, latestBlockhash] =
     await Promise.all([
       connection.getAccountInfo(senderTokenAccount, "confirmed"),

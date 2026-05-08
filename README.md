@@ -25,6 +25,7 @@ import {
   getAurioBalance,
   getSolBalance,
   buildAurioTransferTx,
+  payToTambu,
   getAurioConnection,
 } from "aurio-sdk";
 
@@ -37,6 +38,12 @@ const tx = await buildAurioTransferTx({
   sender: "sender-address",
   recipient: "recipient-address",
   amount: "100",
+});
+
+const tambuTx = await payToTambu({
+  sender: "sender-address",
+  tambuMint: "NFT_MINT_ADDRESS",
+  amount: 250,
 });
 ```
 
@@ -82,8 +89,25 @@ Build a transaction for transferring AUR tokens.
 
 **Parameters:**
 - `sender: string` - Sender wallet address
-- `recipient: string` - Recipient wallet address
+- `recipient: string | PublicKey` - Recipient wallet address or Tambu NFT mint address
 - `amount: number | string` - Amount in UI units
+
+#### `payToTambu(params: TambuTransferParams): Promise<Transaction>`
+Resolve a Tambu NFT mint to its payout wallet and build the SPL transfer transaction.
+
+**Parameters:**
+- `sender: string` - Sender wallet address
+- `tambuMint: string` - Tambu NFT mint address
+- `amount: number | string` - Amount in UI units
+
+#### `getTambuFromNFT(mint: string): Promise<TambuInfo>`
+Read Metaplex metadata and JSON metadata for a Tambu NFT.
+
+#### `resolveTambuWallet(mint: string): Promise<PublicKey>`
+Resolve the payout wallet encoded in a Tambu NFT.
+
+#### `isValidTambuNFT(mint: string): Promise<boolean>`
+Validate that a mint has Tambu metadata and a valid payout wallet.
 
 #### `getAurioTokenAccount(wallet: string): PublicKey`
 Get the associated token account for a wallet.
@@ -118,6 +142,7 @@ See the `/examples/react-native` directory for complete React Native/Expo exampl
 src/
   core/          ← Solana + SPL logic (no React)
     aurio.ts
+    tambu.ts
     constants/
       web3.ts
     index.ts
@@ -158,3 +183,7 @@ MIT
 ## Support
 
 For issues, questions, or contributions, please visit the repository.
+
+## AI Reference
+
+If you are using an AI assistant to work with this SDK, see [AI_REFERENCE.md](./AI_REFERENCE.md) for a compact implementation-oriented overview.
