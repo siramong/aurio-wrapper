@@ -6,7 +6,7 @@ Thank you for contributing to Aurio SDK! This document provides guidelines for d
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/aurio-sdk.git
+git clone https://github.com/siramong/aurio-wrapper.git
 cd aurio-sdk
 
 # Install dependencies
